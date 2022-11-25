@@ -58,7 +58,7 @@ module Whois
             Whois::Parser.bug!(ParserError, "Unknown status `#{::Regexp.last_match(1)}'.")
           end
         else
-          Whois::Parser.bug!(ParserError, "Unable to parse status.")
+          node("Expiry date") { |str| parse_time(str) }.nil? ? :available : :registered
         end
       end
 
@@ -88,8 +88,9 @@ module Whois
         node("Registrar") do |hash|
           Parser::Registrar.new(
             id:           hash["Number"],
-            name:         hash["Name"],
-            organization: hash["Name"]
+            name:         hash["Name"] || node("Registrar"),
+            organization: hash["Name"] || node("Registrar"),
+            url: hash["URL"] || node("Registrar URL")
           )
         end
       end
@@ -144,6 +145,7 @@ module Whois
                       case ::Regexp.last_match(1)
                       when "2007" then "1"
                       when "2010" then "2"
+                      when "2022" then "2"
                       end
                     end
           version || Whois::Parser.bug!(ParserError, "Unable to detect version.")

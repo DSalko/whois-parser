@@ -28,6 +28,7 @@ module Whois
     #   # => false
     #
     module Scannable
+      MAX_KEY_LENGTH = 100
 
       def self.included(base)
         base.class_attribute :scanner
@@ -35,7 +36,9 @@ module Whois
 
       def node(key)
         if block_given?
-          value = ast[key]
+          matching_key = ast.key?(key) ? key : ast.keys.find { |k| k.downcase =~ Regexp.new(key.downcase) && k.length < MAX_KEY_LENGTH }
+          value = ast[matching_key]
+          value = nil if value == true # because of ast['status:available'] = true
           value = yield(value) unless value.nil?
           value
         else
